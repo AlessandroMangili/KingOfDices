@@ -11,6 +11,9 @@ using System.Net;
 using System.Net.Sockets;
 using System.Threading;
 using static System.Windows.Forms.VisualStyles.VisualStyleElement;
+using System.IO;
+using System.Runtime.ExceptionServices;
+using System.Collections.Specialized;
 
 namespace ClientKingOfDices
 {
@@ -19,6 +22,7 @@ namespace ClientKingOfDices
         Socket socket;
         int counter = 0;
         bool stop = false;
+        private string path = @"C:\Users\Alessandro\Desktop\Ripetizioni\GifDati\src\{}";
         public Form1()
         {
             InitializeComponent();
@@ -26,8 +30,28 @@ namespace ClientKingOfDices
 
         private void button1_Click(object sender, EventArgs e)
         {
-            Thread start = new Thread(new ThreadStart(start_connect));
-            start.Start();
+            RollDadi.Enabled = true;
+            RollDadi2.Enabled = true;
+            if (counter == 0)
+            {
+                label1.Text = "";
+                label2.Text = "";
+                label3.Text = "";
+                Thread start = new Thread(new ThreadStart(start_connect));
+                start.Start();
+
+                counter++;
+                button3.Enabled = true;
+            } else
+            {
+                socket.Send(BitConverter.GetBytes(true));
+                counter++;
+                if(counter == 4)
+                {
+                    button1.Enabled = false;
+                    button3.Enabled = false;
+                }
+            }
         }
 
         private void start_connect()
@@ -37,35 +61,9 @@ namespace ClientKingOfDices
             socket = new Socket(ip.AddressFamily, SocketType.Stream, ProtocolType.Tcp);
             try
             {
-                label1.Invoke((MethodInvoker)delegate ()
-                {
-                    label1.Text = "";
-                });
-                label2.Invoke((MethodInvoker)delegate ()
-                {
-                    label2.Text = "";
-                });
-                label3.Invoke((MethodInvoker)delegate ()
-                {
-                    label3.Text = "";
-                });
-                button1.Invoke((MethodInvoker)delegate ()
-                {
-                    button1.Enabled = false;
-                });
-                button2.Invoke((MethodInvoker)delegate ()
-                {
-                    button2.Enabled = true;
-                });
-                button3.Invoke((MethodInvoker)delegate ()
-                {
-                    button3.Enabled = true;
-                });
-
                 socket.Connect(EP);
                 scrivi_risultato();
 
-                counter = 0;
                 int messaggio = 0;
                 Thread ascolto = new Thread(() =>
                 {
@@ -97,39 +95,29 @@ namespace ClientKingOfDices
 
                 socket.Shutdown(SocketShutdown.Both);
                 socket.Close();
-            }
-            catch (Exception errore)
-            {
+
                 button1.Invoke((MethodInvoker)delegate ()
                 {
                     button1.Enabled = true;
                 });
-                MessageBox.Show(errore.Message);
+                counter = 0;
             }
-        }
-
-        private void button2_Click(object sender, EventArgs e)
-        {
-            socket.Send(BitConverter.GetBytes(true));
-            counter++;
-            if(counter == 3)
+            catch (Exception errore)
             {
-                button2.Enabled = false;
-                button3.Enabled = false;
-                button1.Enabled = true;
+                counter = 0;
+                MessageBox.Show(errore.Message);
             }
         }
         private void button3_Click(object sender, EventArgs e)
         {
             socket.Send(BitConverter.GetBytes(false));
-            button2.Enabled = false;
             button3.Enabled = false;
-            button1.Enabled = true;
         }
 
         private int scrivi_risultato()
         {
             byte[] BRecive = new byte[1024];
+
             socket.Receive(BRecive);
             int messaggio = BitConverter.ToInt32(BRecive, 0);
             if (messaggio >= 1)
@@ -139,24 +127,43 @@ namespace ClientKingOfDices
                     label1.Text = messaggio.ToString();
                 });
 
-                socket.Receive(BRecive);
-                int messaggio2 = BitConverter.ToInt32(BRecive, 0);
-                label2.Invoke((MethodInvoker)delegate ()
-                {
-                    label2.Text = messaggio2.ToString();
-                });
+                RollDadi.Image = new Bitmap(path.Replace("{}", "Dado_" + messaggio.ToString() + ".jpg"));
 
                 socket.Receive(BRecive);
-                int messaggio3 = BitConverter.ToInt32(BRecive, 0);                
+                messaggio = BitConverter.ToInt32(BRecive, 0);
+                label2.Invoke((MethodInvoker)delegate ()
+                {
+                    label2.Text = messaggio.ToString();
+                });
+
+                RollDadi2.Image = new Bitmap(path.Replace("{}", "Dado_" + messaggio.ToString() + ".jpg"));
+
+                socket.Receive(BRecive);
+                messaggio = BitConverter.ToInt32(BRecive, 0);                
                 label3.Invoke((MethodInvoker)delegate ()
                 {
-                    label3.Text = messaggio3.ToString();
+                    label3.Text = messaggio.ToString();
                 });
-                return messaggio3;
-            } else
-            {
-                return messaggio;
             }
+
+            RollDadi.Invoke((MethodInvoker)delegate ()
+            {
+                RollDadi.Enabled = false;
+            });
+            RollDadi2.Invoke((MethodInvoker)delegate ()
+            {
+                RollDadi2.Enabled = false;
+            });
+            return messaggio;
+        }
+
+        private void Form1_Load(object sender, EventArgs e)
+        {
+            RollDadi.Enabled = false;
+            RollDadi2.Enabled = false;
+            button3.Enabled = false;
+            RollDadi.Image = Image.FromFile(path.Replace("{}", "Lancio_Dadi.gif"));
+            RollDadi2.Image = Image.FromFile(path.Replace("{}", "Lancio_Dadi.gif"));
         }
     }
 }
