@@ -29,7 +29,8 @@ namespace ServerKingOfDices
 
         private void button1_Click(object sender, EventArgs e)
         {
-            IPAddress ip = IPAddress.Parse("127.0.0.1");
+            //IPAddress ip = IPAddress.Parse("127.0.0.1");
+            IPAddress ip = IPAddress.Parse("10.0.0.146");
             Socket socket = new Socket(ip.AddressFamily, SocketType.Stream, ProtocolType.Tcp);
             IPEndPoint endpoint = new IPEndPoint(ip, 9999);
             try
@@ -42,6 +43,7 @@ namespace ServerKingOfDices
                     button1.Enabled = true;
                 });
                 Accept.Start();
+
                 button1.Enabled = false;
             }
             catch (Exception errore)
@@ -50,6 +52,9 @@ namespace ServerKingOfDices
             }
         }
 
+        /**
+         * I thread.Sleep servono per rallentare l'invio sul canale socket altrimenti il tempo per raggiungere l'host remoto non è sufficiente e si perderebbero i pacchetti
+         */
         private int ClientThread(Socket client)
         {
             int addrolls = 0;
@@ -61,19 +66,21 @@ namespace ServerKingOfDices
 
                 RollDice = rn.Next(1, 7);
                 addrolls = RollDice;
-                label1.Text = "dado 1 = " + RollDice.ToString();
+                //label1.Text = "dado 1 = " + RollDice.ToString();
                 buffer = BitConverter.GetBytes(RollDice);
                 client.Send(buffer);
+                Thread.Sleep(100);
 
                 RollDice = rn.Next(1, 7);
                 addrolls += RollDice;
-                label2.Text = "dado 2 = " + RollDice.ToString();
+                //label2.Text = "dado 2 = " + RollDice.ToString();
                 buffer = BitConverter.GetBytes(RollDice);
                 client.Send(buffer);
+                Thread.Sleep(100);
 
                 buffer = BitConverter.GetBytes(addrolls);
-                label3.Text = "Somma = " + addrolls.ToString();
                 client.Send(buffer);
+                Thread.Sleep(100);
             }
             catch (Exception errore)
             {
@@ -158,12 +165,12 @@ namespace ServerKingOfDices
                             ValoriClient.ElementAt(1).Key.Send(BitConverter.GetBytes(0));
                             break;
                         case -1:
-                            ValoriClient.ElementAt(0).Key.Send(BitConverter.GetBytes(-1));
-                            ValoriClient.ElementAt(1).Key.Send(BitConverter.GetBytes(-2));
-                            break;
-                        case -2:
                             ValoriClient.ElementAt(0).Key.Send(BitConverter.GetBytes(-2));
                             ValoriClient.ElementAt(1).Key.Send(BitConverter.GetBytes(-1));
+                            break;
+                        case -2:
+                            ValoriClient.ElementAt(0).Key.Send(BitConverter.GetBytes(-1));
+                            ValoriClient.ElementAt(1).Key.Send(BitConverter.GetBytes(-2));
                             break;
                         default:
                             throw new ArgumentOutOfRangeException("Valore non presente nel range");
@@ -175,9 +182,8 @@ namespace ServerKingOfDices
                     ValoriClient.ElementAt(1).Key.Close();
                     N_client = 0;
                     ValoriClient.Clear();
-                    //label1.Text = "";
-                    //label2.Text = "";
-                    //label3.Text = "";
+                    label1.Text = "";
+                    label2.Text = "";
                 }
             }
         }
@@ -202,14 +208,14 @@ namespace ServerKingOfDices
         {
             if (mappa.ElementAt(0).Value > mappa.ElementAt(1).Value)
             {
-                MessageBox.Show("Ha vinto il giocatore: " + mappa.ElementAt(0).Key.RemoteEndPoint + " totalizzando " + mappa.ElementAt(1).Value + " punti contro i " + mappa.ElementAt(0).Value + " punti");
+                MessageBox.Show("Ha vinto il giocatore: " + mappa.ElementAt(1).Key.RemoteEndPoint + " totalizzando " + mappa.ElementAt(0).Value + " punti contro i " + mappa.ElementAt(1).Value + " punti");
                 return -1;
 
             } 
             
             if (mappa.ElementAt(0).Value < mappa.ElementAt(1).Value)
             {
-                MessageBox.Show("Ha vinto il giocatore: " + mappa.ElementAt(1).Key.RemoteEndPoint + " totalizzando " + mappa.ElementAt(0).Value + " punti contro i " + mappa.ElementAt(1).Value + " punti");
+                MessageBox.Show("Ha vinto il giocatore: " + mappa.ElementAt(0).Key.RemoteEndPoint + " totalizzando " + mappa.ElementAt(1).Value + " punti contro i " + mappa.ElementAt(0).Value + " punti");
                 return -2;
             }
 

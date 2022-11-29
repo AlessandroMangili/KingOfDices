@@ -32,7 +32,7 @@ namespace ClientKingOfDices
 
         private void start_connect()
         {
-            IPAddress ip = IPAddress.Parse("127.0.0.1");
+            IPAddress ip = IPAddress.Parse("10.0.0.146");
             IPEndPoint EP = new IPEndPoint(ip, 9999);
             socket = new Socket(ip.AddressFamily, SocketType.Stream, ProtocolType.Tcp);
             try

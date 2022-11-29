@@ -51,3 +51,14 @@ C:\Users\Alessandro\Desktop\Ripetizioni\OtherProject\KingOfDices\ServerKingOfDic
 C:\Users\Alessandro\Desktop\Ripetizioni\OtherProject\KingOfDices\ServerKingOfDices\ServerKingOfDices\obj\Debug\ServerKingOfDices.csproj.CoreCompileInputs.cache
 C:\Users\Alessandro\Desktop\Ripetizioni\OtherProject\KingOfDices\ServerKingOfDices\ServerKingOfDices\obj\Debug\ServerKingOfDices.exe
 C:\Users\Alessandro\Desktop\Ripetizioni\OtherProject\KingOfDices\ServerKingOfDices\ServerKingOfDices\obj\Debug\ServerKingOfDices.pdb
+C:\Users\Alessandro\Desktop\Ripetizioni\KingOfDices\ServerKingOfDices\ServerKingOfDices\bin\Debug\ServerKingOfDices.exe.config
+C:\Users\Alessandro\Desktop\Ripetizioni\KingOfDices\ServerKingOfDices\ServerKingOfDices\bin\Debug\ServerKingOfDices.exe
+C:\Users\Alessandro\Desktop\Ripetizioni\KingOfDices\ServerKingOfDices\ServerKingOfDices\bin\Debug\ServerKingOfDices.pdb
+C:\Users\Alessandro\Desktop\Ripetizioni\KingOfDices\ServerKingOfDices\ServerKingOfDices\obj\Debug\ServerKingOfDices.csproj.AssemblyReference.cache
+C:\Users\Alessandro\Desktop\Ripetizioni\KingOfDices\ServerKingOfDices\ServerKingOfDices\obj\Debug\ServerKingOfDices.csproj.SuggestedBindingRedirects.cache
+C:\Users\Alessandro\Desktop\Ripetizioni\KingOfDices\ServerKingOfDices\ServerKingOfDices\obj\Debug\ServerKingOfDices.Form1.resources
+C:\Users\Alessandro\Desktop\Ripetizioni\KingOfDices\ServerKingOfDices\ServerKingOfDices\obj\Debug\ServerKingOfDices.Properties.Resources.resources
+C:\Users\Alessandro\Desktop\Ripetizioni\KingOfDices\ServerKingOfDices\ServerKingOfDices\obj\Debug\ServerKingOfDices.csproj.GenerateResource.cache
+C:\Users\Alessandro\Desktop\Ripetizioni\KingOfDices\ServerKingOfDices\ServerKingOfDices\obj\Debug\ServerKingOfDices.csproj.CoreCompileInputs.cache
+C:\Users\Alessandro\Desktop\Ripetizioni\KingOfDices\ServerKingOfDices\ServerKingOfDices\obj\Debug\ServerKingOfDices.exe
+C:\Users\Alessandro\Desktop\Ripetizioni\KingOfDices\ServerKingOfDices\ServerKingOfDices\obj\Debug\ServerKingOfDices.pdb
