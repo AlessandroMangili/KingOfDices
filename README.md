@@ -13,11 +13,11 @@ Ogni giocatore vedrà la somma dei dadi che ha fatto l'avversario, e ha due poss
 
 ### Combinazioni
 
-1 e 1 vale 99
-2 e 2 vale 88
-3 e 3 vale 77
-4 e 4 vale 66
-5 e 5 vale 55
-6 e 6 vale 44
+- 1 e 1 vale 99
+- 2 e 2 vale 88
+- 3 e 3 vale 77
+- 4 e 4 vale 66
+- 5 e 5 vale 55
+- 6 e 6 vale 44
 
 Le altre combinazioni valgono semplicemente la somma dei due dadi
