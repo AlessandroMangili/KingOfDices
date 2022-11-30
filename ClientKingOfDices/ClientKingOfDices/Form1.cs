@@ -14,6 +14,7 @@ using static System.Windows.Forms.VisualStyles.VisualStyleElement;
 using System.IO;
 using System.Runtime.ExceptionServices;
 using System.Collections.Specialized;
+using System.Runtime.InteropServices;
 
 namespace ClientKingOfDices
 {
@@ -32,31 +33,41 @@ namespace ClientKingOfDices
         {
             RollDadi.Enabled = true;
             RollDadi2.Enabled = true;
-            if (counter == 0)
+            try
             {
-                label1.Text = "";
-                label2.Text = "";
-                label3.Text = "";
-                Thread start = new Thread(new ThreadStart(start_connect));
-                start.Start();
-
-                counter++;
-                button3.Enabled = true;
-            } else
-            {
-                socket.Send(BitConverter.GetBytes(true));
-                counter++;
-                if(counter == 4)
+                if (counter == 0)
                 {
-                    button1.Enabled = false;
-                    button3.Enabled = false;
+                    label1.Text = "";
+                    label2.Text = "";
+                    label3.Text = "";
+                    RollDadi.Image = Image.FromFile(path.Replace("{}", "Lancio_Dadi.gif"));
+                    RollDadi2.Image = Image.FromFile(path.Replace("{}", "Lancio_Dadi.gif"));
+                    button3.Enabled = true;
+
+                    Thread start = new Thread(new ThreadStart(start_connect));
+                    start.Start();
+                    counter++;
                 }
+                else
+                {
+                    socket.Send(BitConverter.GetBytes(true));
+                    counter++;
+                    if (counter == 4)
+                    {
+                        button1.Enabled = false;
+                        button3.Enabled = false;
+                    }
+                }
+            } catch(Exception exp)
+            {
+                MessageBox.Show(exp.Message);
             }
         }
 
         private void start_connect()
         {
-            IPAddress ip = IPAddress.Parse("10.0.0.146");
+            //IPAddress ip = IPAddress.Parse("10.0.0.146");
+            IPAddress ip = IPAddress.Parse("127.0.0.1");
             IPEndPoint EP = new IPEndPoint(ip, 9999);
             socket = new Socket(ip.AddressFamily, SocketType.Stream, ProtocolType.Tcp);
             try
@@ -112,48 +123,56 @@ namespace ClientKingOfDices
         {
             socket.Send(BitConverter.GetBytes(false));
             button3.Enabled = false;
+            button1.Enabled = false;
         }
 
         private int scrivi_risultato()
         {
             byte[] BRecive = new byte[1024];
-
-            socket.Receive(BRecive);
-            int messaggio = BitConverter.ToInt32(BRecive, 0);
-            if (messaggio >= 1)
+            int messaggio = 0;
+            try
             {
-                label1.Invoke((MethodInvoker)delegate ()
-                {
-                    label1.Text = messaggio.ToString();
-                });
-
-                RollDadi.Image = new Bitmap(path.Replace("{}", "Dado_" + messaggio.ToString() + ".jpg"));
-
                 socket.Receive(BRecive);
                 messaggio = BitConverter.ToInt32(BRecive, 0);
-                label2.Invoke((MethodInvoker)delegate ()
+                if (messaggio >= 1)
                 {
-                    label2.Text = messaggio.ToString();
-                });
+                    label1.Invoke((MethodInvoker)delegate ()
+                    {
+                        label1.Text = messaggio.ToString();
+                    });
 
-                RollDadi2.Image = new Bitmap(path.Replace("{}", "Dado_" + messaggio.ToString() + ".jpg"));
+                    RollDadi.Image = new Bitmap(path.Replace("{}", "Dado_" + messaggio.ToString() + ".jpg"));
 
-                socket.Receive(BRecive);
-                messaggio = BitConverter.ToInt32(BRecive, 0);                
-                label3.Invoke((MethodInvoker)delegate ()
+                    socket.Receive(BRecive);
+                    messaggio = BitConverter.ToInt32(BRecive, 0);
+                    label2.Invoke((MethodInvoker)delegate ()
+                    {
+                        label2.Text = messaggio.ToString();
+                    });
+
+                    RollDadi2.Image = new Bitmap(path.Replace("{}", "Dado_" + messaggio.ToString() + ".jpg"));
+
+                    socket.Receive(BRecive);
+                    messaggio = BitConverter.ToInt32(BRecive, 0);
+                    label3.Invoke((MethodInvoker)delegate ()
+                    {
+                        label3.Text = messaggio.ToString();
+                    });
+                }
+
+                RollDadi.Invoke((MethodInvoker)delegate ()
                 {
-                    label3.Text = messaggio.ToString();
+                    RollDadi.Enabled = false;
                 });
+                RollDadi2.Invoke((MethodInvoker)delegate ()
+                {
+                    RollDadi2.Enabled = false;
+                });
+            } catch(Exception exp)
+            {
+                MessageBox.Show(exp.Message);
             }
 
-            RollDadi.Invoke((MethodInvoker)delegate ()
-            {
-                RollDadi.Enabled = false;
-            });
-            RollDadi2.Invoke((MethodInvoker)delegate ()
-            {
-                RollDadi2.Enabled = false;
-            });
             return messaggio;
         }
 
@@ -162,8 +181,14 @@ namespace ClientKingOfDices
             RollDadi.Enabled = false;
             RollDadi2.Enabled = false;
             button3.Enabled = false;
-            RollDadi.Image = Image.FromFile(path.Replace("{}", "Lancio_Dadi.gif"));
-            RollDadi2.Image = Image.FromFile(path.Replace("{}", "Lancio_Dadi.gif"));
+            try
+            {
+                RollDadi.Image = Image.FromFile(path.Replace("{}", "Lancio_Dadi.gif"));
+                RollDadi2.Image = Image.FromFile(path.Replace("{}", "Lancio_Dadi.gif"));
+            } catch(Exception exp)
+            {
+                MessageBox.Show(exp.Message);
+            }
         }
     }
 }

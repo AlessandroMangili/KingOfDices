@@ -24,12 +24,13 @@ namespace ServerKingOfDices
 
         private void button1_Click(object sender, EventArgs e)
         {
-            //IPAddress ip = IPAddress.Parse("127.0.0.1");
-            IPAddress ip = IPAddress.Parse("10.0.0.146");
-            Socket socket = new Socket(ip.AddressFamily, SocketType.Stream, ProtocolType.Tcp);
-            IPEndPoint endpoint = new IPEndPoint(ip, 9999);
             try
             {
+                IPAddress ip = IPAddress.Parse("127.0.0.1");
+                //IPAddress ip = IPAddress.Parse("10.0.0.146");
+                Socket socket = new Socket(ip.AddressFamily, SocketType.Stream, ProtocolType.Tcp);
+                IPEndPoint endpoint = new IPEndPoint(ip, 9999);
+
                 socket.Bind(endpoint);
                 socket.Listen(10);
                 Thread Accept = new Thread(() =>
@@ -48,7 +49,9 @@ namespace ServerKingOfDices
         }
 
         /**
-         * I thread.Sleep servono per rallentare l'invio sul canale socket altrimenti il tempo per raggiungere l'host remoto non è sufficiente e si perderebbero i pacchetti
+         * I thread.Sleep servono per rallentare l'invio sul canale socket altrimenti il tempo per raggiungere 
+         * l'host remoto non è sufficiente e si perderebbero i pacchetti. In caso non arrivano tutti i numeri ai vari client,
+         * aumentare il thread sleep in modo da lasciare il tempo di far arrivare tutti i pacchetti
          */
         private int ClientThread(Socket client)
         {
@@ -61,21 +64,19 @@ namespace ServerKingOfDices
 
                 RollDice = rn.Next(1, 7);
                 addrolls = RollDice;
-                //label1.Text = "dado 1 = " + RollDice.ToString();
                 buffer = BitConverter.GetBytes(RollDice);
                 client.Send(buffer);
-                Thread.Sleep(100);
+                Thread.Sleep(200);
 
                 RollDice = rn.Next(1, 7);
-                addrolls += RollDice;
-                //label2.Text = "dado 2 = " + RollDice.ToString();
                 buffer = BitConverter.GetBytes(RollDice);
                 client.Send(buffer);
-                Thread.Sleep(100);
+                Thread.Sleep(200);
 
+                addrolls += RollDice;
                 buffer = BitConverter.GetBytes(addrolls);
                 client.Send(buffer);
-                Thread.Sleep(100);
+                Thread.Sleep(200);
             }
             catch (Exception errore)
             {
@@ -92,93 +93,106 @@ namespace ServerKingOfDices
             {
                 if (N_client < 2)
                 {
-                    Socket client = socket.Accept();
-
-                    if (client.Connected == true)
+                    try
                     {
-                        N_client++;
-                        ValoriClient.Add(client, 0);
-                    }
+                        Socket client = socket.Accept();
 
-                    Thread ThreadMulticlient = new Thread(() => {
-                        if (N_client==2) //Entrerà soltanto il secondo client
+                        if (client.Connected == true)
                         {
-                            int somma_dadi = ClientThread(ValoriClient.ElementAt(0).Key);
-                            if (somma_dadi == 0)
-                                throw new NullReferenceException("Non sono stati lanciati i dati a seguito di una eccezione");
-                            ValoriClient[ValoriClient.ElementAt(1).Key] = somma_dadi;
-
-                            somma_dadi = ClientThread(ValoriClient.ElementAt(1).Key);
-                            if (somma_dadi == 0)
-                                throw new NullReferenceException("Non sono stati lanciati i dati a seguito di una eccezione");
-                            ValoriClient[ValoriClient.ElementAt(0).Key] = somma_dadi;
+                            N_client++;
+                            ValoriClient.Add(client, 0);
                         }
-                    });
-                    ThreadMulticlient.Start();
-                    ThreadMulticlient.Join();
+
+                        Thread ThreadMulticlient = new Thread(() =>
+                        {
+                            if (N_client == 2) //Entrerà soltanto il secondo client
+                            {
+                                int somma_dadi = ClientThread(ValoriClient.ElementAt(0).Key);
+                                if (somma_dadi == 0)
+                                    throw new NullReferenceException("Non sono stati lanciati i dati a seguito di una eccezione");
+                                ValoriClient[ValoriClient.ElementAt(1).Key] = somma_dadi;
+
+                                somma_dadi = ClientThread(ValoriClient.ElementAt(1).Key);
+                                if (somma_dadi == 0)
+                                    throw new NullReferenceException("Non sono stati lanciati i dati a seguito di una eccezione");
+                                ValoriClient[ValoriClient.ElementAt(0).Key] = somma_dadi;
+                            }
+                        });
+                        ThreadMulticlient.Start();
+                        ThreadMulticlient.Join();
+                    }
+                    catch (Exception exp)
+                    {
+                        MessageBox.Show(exp.Message);
+                    }
                 } else 
                 {
-                    Thread player1 = new Thread(() =>
+                    try
                     {
-                        int counter = 0, ris = 0;
-                        bool stop = false;
-                        while (counter < 3 && !stop)
+                        Thread player1 = new Thread(() =>
                         {
-                            ris = gioca_turno(ValoriClient.ElementAt(0).Key);
-                            if (ris != 0)
-                                ValoriClient[ValoriClient.ElementAt(1).Key] = ris;
-                            else
-                                stop = true;
-                            counter++;
-                        }
-                    });
-                    player1.Start();
+                            int counter = 0, ris = 0;
+                            bool stop = false;
+                            while (counter < 3 && !stop)
+                            {
+                                ris = gioca_turno(ValoriClient.ElementAt(0).Key);
+                                if (ris != 0)
+                                    ValoriClient[ValoriClient.ElementAt(0).Key] = ris;
+                                else
+                                    stop = true;
+                                counter++;
+                            }
+                        });
+                        player1.Start();
 
-                    Thread player2 = new Thread(() =>
-                    {
-                        int counter = 0, ris = 0;
-                        bool stop = false;
-                        while (counter < 3 && !stop)
+                        Thread player2 = new Thread(() =>
                         {
-                            ris = gioca_turno(ValoriClient.ElementAt(1).Key);
-                            if (ris != 0)
-                                ValoriClient[ValoriClient.ElementAt(0).Key] = ris;
-                            else
-                                stop = true;
-                            counter++;
+                            int counter = 0, ris = 0;
+                            bool stop = false;
+                            while (counter < 3 && !stop)
+                            {
+                                ris = gioca_turno(ValoriClient.ElementAt(1).Key);
+                                if (ris != 0)
+                                    ValoriClient[ValoriClient.ElementAt(1).Key] = ris;
+                                else
+                                    stop = true;
+                                counter++;
+                            }
+                        });
+                        player2.Start();
+
+                        player1.Join();
+                        player2.Join();
+
+                        switch (who_wins(ValoriClient))
+                        {
+                            case 0:
+                                ValoriClient.ElementAt(0).Key.Send(BitConverter.GetBytes(0));
+                                ValoriClient.ElementAt(1).Key.Send(BitConverter.GetBytes(0));
+                                break;
+                            case -1:
+                                ValoriClient.ElementAt(0).Key.Send(BitConverter.GetBytes(-2));
+                                ValoriClient.ElementAt(1).Key.Send(BitConverter.GetBytes(-1));
+                                break;
+                            case -2:
+                                ValoriClient.ElementAt(0).Key.Send(BitConverter.GetBytes(-1));
+                                ValoriClient.ElementAt(1).Key.Send(BitConverter.GetBytes(-2));
+                                break;
+                            default:
+                                throw new ArgumentOutOfRangeException("Valore non presente nel range");
                         }
-                    });
-                    player2.Start();
 
-                    player1.Join();
-                    player2.Join();
-
-                    switch (who_wins(ValoriClient))
+                        ValoriClient.ElementAt(0).Key.Shutdown(SocketShutdown.Both);
+                        ValoriClient.ElementAt(0).Key.Close();
+                        ValoriClient.ElementAt(1).Key.Shutdown(SocketShutdown.Both);
+                        ValoriClient.ElementAt(1).Key.Close();
+                    } catch(Exception exp)
                     {
-                        case 0:
-                            ValoriClient.ElementAt(0).Key.Send(BitConverter.GetBytes(0));
-                            ValoriClient.ElementAt(1).Key.Send(BitConverter.GetBytes(0));
-                            break;
-                        case -1:
-                            ValoriClient.ElementAt(0).Key.Send(BitConverter.GetBytes(-2));
-                            ValoriClient.ElementAt(1).Key.Send(BitConverter.GetBytes(-1));
-                            break;
-                        case -2:
-                            ValoriClient.ElementAt(0).Key.Send(BitConverter.GetBytes(-1));
-                            ValoriClient.ElementAt(1).Key.Send(BitConverter.GetBytes(-2));
-                            break;
-                        default:
-                            throw new ArgumentOutOfRangeException("Valore non presente nel range");
-                    }
+                        MessageBox.Show(exp.Message);
+                    }                        
 
-                    ValoriClient.ElementAt(0).Key.Shutdown(SocketShutdown.Both);
-                    ValoriClient.ElementAt(0).Key.Close();
-                    ValoriClient.ElementAt(1).Key.Shutdown(SocketShutdown.Both);
-                    ValoriClient.ElementAt(1).Key.Close();
                     N_client = 0;
                     ValoriClient.Clear();
-                    label1.Text = "";
-                    label2.Text = "";
                 }
             }
         }
@@ -187,14 +201,20 @@ namespace ServerKingOfDices
         {
             byte[] buffer = new byte[1024];
             int risultato = 0;
-           
-            player.Receive(buffer);
-            if (BitConverter.ToBoolean(buffer, 0))
+            try
             {
-                int somma_dadi = ClientThread(player);
-                if (somma_dadi == 0)
-                    throw new NullReferenceException("Non sono stati lanciati i dati a seguito di una eccezione");
-                risultato = somma_dadi;
+                player.Receive(buffer);
+                if (BitConverter.ToBoolean(buffer, 0))
+                {
+                    int somma_dadi = ClientThread(player);
+                    if (somma_dadi == 0)
+                        throw new NullReferenceException("Non sono stati lanciati i dati a seguito di una eccezione");
+                    risultato = somma_dadi;
+                }
+            }
+            catch(Exception exp)
+            {
+                MessageBox.Show(exp.Message);
             }
             return risultato;
         }
@@ -203,18 +223,18 @@ namespace ServerKingOfDices
         {
             if (mappa.ElementAt(0).Value > mappa.ElementAt(1).Value)
             {
-                MessageBox.Show("Ha vinto il giocatore: " + mappa.ElementAt(1).Key.RemoteEndPoint + " totalizzando " + mappa.ElementAt(0).Value + " punti contro i " + mappa.ElementAt(1).Value + " punti");
+                //MessageBox.Show("Ha vinto il giocatore: " + mappa.ElementAt(1).Key.RemoteEndPoint + " totalizzando " + mappa.ElementAt(0).Value + " punti contro i " + mappa.ElementAt(1).Value + " punti");
                 return -1;
 
             } 
             
             if (mappa.ElementAt(0).Value < mappa.ElementAt(1).Value)
             {
-                MessageBox.Show("Ha vinto il giocatore: " + mappa.ElementAt(0).Key.RemoteEndPoint + " totalizzando " + mappa.ElementAt(1).Value + " punti contro i " + mappa.ElementAt(0).Value + " punti");
+                //MessageBox.Show("Ha vinto il giocatore: " + mappa.ElementAt(0).Key.RemoteEndPoint + " totalizzando " + mappa.ElementAt(1).Value + " punti contro i " + mappa.ElementAt(0).Value + " punti");
                 return -2;
             }
 
-            MessageBox.Show("La partita è finita in pareggio con un punteggio di " + mappa.ElementAt(0).Value + " punti");
+            //MessageBox.Show("La partita è finita in pareggio con un punteggio di " + mappa.ElementAt(0).Value + " punti");
             return 0;
         }
     }
