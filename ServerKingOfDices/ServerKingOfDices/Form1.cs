@@ -28,14 +28,14 @@ namespace ServerKingOfDices
             {
                 IPAddress ip = IPAddress.Parse("127.0.0.1");
                 //IPAddress ip = IPAddress.Parse("10.0.0.146");
-                Socket socket = new Socket(ip.AddressFamily, SocketType.Stream, ProtocolType.Tcp);
+                Socket server = new Socket(ip.AddressFamily, SocketType.Stream, ProtocolType.Tcp);
                 IPEndPoint endpoint = new IPEndPoint(ip, 9999);
+                server.Bind(endpoint);
+                server.Listen(10);
 
-                socket.Bind(endpoint);
-                socket.Listen(10);
                 Thread Accept = new Thread(() =>
                 {
-                    ClientAccept(socket);
+                    ClientAccept(server);
                     button1.Enabled = true;
                 });
                 Accept.Start();
@@ -85,7 +85,7 @@ namespace ServerKingOfDices
             return addrolls;
         }
 
-        private void ClientAccept (Socket socket)
+        private void ClientAccept (Socket server)
         {
             int N_client = 0;
             Dictionary<Socket,int> ValoriClient = new Dictionary<Socket, int>();
@@ -95,7 +95,7 @@ namespace ServerKingOfDices
                 {
                     try
                     {
-                        Socket client = socket.Accept();
+                        Socket client = server.Accept();
 
                         if (client.Connected == true)
                         {
