@@ -23,7 +23,7 @@ namespace ClientKingOfDices
         Socket socket;
         int counter = 0;
         bool stop = false;
-        private string path = @"C:\Users\Alessandro\Desktop\Ripetizioni\GifDati\src\{}";
+        private string path = @"..\..\src\{}";
         public Form1()
         {
             InitializeComponent();
@@ -66,8 +66,7 @@ namespace ClientKingOfDices
 
         private void start_connect()
         {
-            //IPAddress ip = IPAddress.Parse("10.0.0.146");
-            IPAddress ip = IPAddress.Parse("127.0.0.1");
+            IPAddress ip = IPAddress.Parse("10.0.0.156");
             IPEndPoint EP = new IPEndPoint(ip, 9999);
             socket = new Socket(ip.AddressFamily, SocketType.Stream, ProtocolType.Tcp);
             try

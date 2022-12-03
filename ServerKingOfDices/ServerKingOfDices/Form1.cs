@@ -11,6 +11,7 @@ using System.Threading.Tasks;
 using System.Windows.Forms;
 using System.Threading;
 using System.Diagnostics;
+using System.Net.NetworkInformation;
 
 namespace ServerKingOfDices
 {
@@ -26,8 +27,8 @@ namespace ServerKingOfDices
         {
             try
             {
-                IPAddress ip = IPAddress.Parse("127.0.0.1");
-                //IPAddress ip = IPAddress.Parse("10.0.0.146");
+                IPAddress ip = getIpAddress();                
+
                 Socket server = new Socket(ip.AddressFamily, SocketType.Stream, ProtocolType.Tcp);
                 IPEndPoint endpoint = new IPEndPoint(ip, 9999);
                 server.Bind(endpoint);
@@ -35,7 +36,7 @@ namespace ServerKingOfDices
 
                 Thread Accept = new Thread(() =>
                 {
-                    ClientAccept(server);
+                    clientAccept(server);
                     button1.Enabled = true;
                 });
                 Accept.Start();
@@ -48,12 +49,33 @@ namespace ServerKingOfDices
             }
         }
 
+        private IPAddress getIpAddress()
+        {
+            List<IPAddress> allIP = new List<IPAddress>(Dns.GetHostAddresses(Dns.GetHostName()));
+            IPAddress ip = IPAddress.Parse("127.0.0.1");
+
+            foreach (var inf in System.Net.NetworkInformation.NetworkInterface.GetAllNetworkInterfaces())
+            {
+                if (inf.Name.Equals("Ethernet") || inf.Name.Equals("Wi-Fi"))
+                {
+                    foreach (UnicastIPAddressInformation ip_interface in inf.GetIPProperties().UnicastAddresses)
+                    {
+                        // Controllare che sia IPv4
+                        if (ip_interface.Address.AddressFamily == System.Net.Sockets.AddressFamily.InterNetwork && allIP.Contains(ip_interface.Address))
+                            ip = IPAddress.Parse(ip_interface.Address.ToString());
+
+                    }
+                }
+            }
+            return ip;
+        }
+
         /**
          * I thread.Sleep servono per rallentare l'invio sul canale socket altrimenti il tempo per raggiungere 
          * l'host remoto non è sufficiente e si perderebbero i pacchetti. In caso non arrivano tutti i numeri ai vari client,
          * aumentare il thread sleep in modo da lasciare il tempo di far arrivare tutti i pacchetti
          */
-        private int ClientThread(Socket client)
+        private int clientThread(Socket client)
         {
             int addrolls = 0;
             try
@@ -85,7 +107,7 @@ namespace ServerKingOfDices
             return addrolls;
         }
 
-        private void ClientAccept (Socket server)
+        private void clientAccept (Socket server)
         {
             int N_client = 0;
             Dictionary<Socket,int> ValoriClient = new Dictionary<Socket, int>();
@@ -105,14 +127,14 @@ namespace ServerKingOfDices
 
                         Thread ThreadMulticlient = new Thread(() =>
                         {
-                            if (N_client == 2) //Entrerà soltanto il secondo client
+                            if (N_client == 2)
                             {
-                                int somma_dadi = ClientThread(ValoriClient.ElementAt(0).Key);
+                                int somma_dadi = clientThread(ValoriClient.ElementAt(0).Key);
                                 if (somma_dadi == 0)
                                     throw new NullReferenceException("Non sono stati lanciati i dati a seguito di una eccezione");
                                 ValoriClient[ValoriClient.ElementAt(1).Key] = somma_dadi;
 
-                                somma_dadi = ClientThread(ValoriClient.ElementAt(1).Key);
+                                somma_dadi = clientThread(ValoriClient.ElementAt(1).Key);
                                 if (somma_dadi == 0)
                                     throw new NullReferenceException("Non sono stati lanciati i dati a seguito di una eccezione");
                                 ValoriClient[ValoriClient.ElementAt(0).Key] = somma_dadi;
@@ -135,9 +157,9 @@ namespace ServerKingOfDices
                             bool stop = false;
                             while (counter < 3 && !stop)
                             {
-                                ris = gioca_turno(ValoriClient.ElementAt(0).Key);
+                                ris = playTurn(ValoriClient.ElementAt(0).Key, ValoriClient.ElementAt(1).Key);
                                 if (ris != 0)
-                                    ValoriClient[ValoriClient.ElementAt(0).Key] = ris;
+                                    ValoriClient[ValoriClient.ElementAt(1).Key] = ris;
                                 else
                                     stop = true;
                                 counter++;
@@ -151,9 +173,9 @@ namespace ServerKingOfDices
                             bool stop = false;
                             while (counter < 3 && !stop)
                             {
-                                ris = gioca_turno(ValoriClient.ElementAt(1).Key);
+                                ris = playTurn(ValoriClient.ElementAt(1).Key, ValoriClient.ElementAt(0).Key);
                                 if (ris != 0)
-                                    ValoriClient[ValoriClient.ElementAt(1).Key] = ris;
+                                    ValoriClient[ValoriClient.ElementAt(0).Key] = ris;
                                 else
                                     stop = true;
                                 counter++;
@@ -164,7 +186,7 @@ namespace ServerKingOfDices
                         player1.Join();
                         player2.Join();
 
-                        switch (who_wins(ValoriClient))
+                        switch (whoWins(ValoriClient))
                         {
                             case 0:
                                 ValoriClient.ElementAt(0).Key.Send(BitConverter.GetBytes(0));
@@ -197,16 +219,16 @@ namespace ServerKingOfDices
             }
         }
 
-        private int gioca_turno(Socket player)
+        private int playTurn(Socket player1, Socket player2)
         {
             byte[] buffer = new byte[1024];
             int risultato = 0;
             try
             {
-                player.Receive(buffer);
+                player1.Receive(buffer);
                 if (BitConverter.ToBoolean(buffer, 0))
                 {
-                    int somma_dadi = ClientThread(player);
+                    int somma_dadi = clientThread(player2);
                     if (somma_dadi == 0)
                         throw new NullReferenceException("Non sono stati lanciati i dati a seguito di una eccezione");
                     risultato = somma_dadi;
@@ -219,22 +241,12 @@ namespace ServerKingOfDices
             return risultato;
         }
 
-        private int who_wins(Dictionary<Socket, int> mappa)
+        private int whoWins(Dictionary<Socket, int> mappa)
         {
             if (mappa.ElementAt(0).Value > mappa.ElementAt(1).Value)
-            {
-                //MessageBox.Show("Ha vinto il giocatore: " + mappa.ElementAt(1).Key.RemoteEndPoint + " totalizzando " + mappa.ElementAt(0).Value + " punti contro i " + mappa.ElementAt(1).Value + " punti");
                 return -1;
-
-            } 
-            
             if (mappa.ElementAt(0).Value < mappa.ElementAt(1).Value)
-            {
-                //MessageBox.Show("Ha vinto il giocatore: " + mappa.ElementAt(0).Key.RemoteEndPoint + " totalizzando " + mappa.ElementAt(1).Value + " punti contro i " + mappa.ElementAt(0).Value + " punti");
                 return -2;
-            }
-
-            //MessageBox.Show("La partita è finita in pareggio con un punteggio di " + mappa.ElementAt(0).Value + " punti");
             return 0;
         }
     }
