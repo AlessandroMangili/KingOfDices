@@ -234,10 +234,6 @@ namespace ServerKingOfDices
 
         private int whoWins(Dictionary<Socket, int> mappa)
         {
-            foreach (var x in mappa)
-            {
-                MessageBox.Show(x.Value.ToString());
-            }
             if (mappa.ElementAt(0).Value > mappa.ElementAt(1).Value)
                 return -1;
             if (mappa.ElementAt(0).Value < mappa.ElementAt(1).Value)
