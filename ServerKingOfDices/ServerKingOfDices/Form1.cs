@@ -19,7 +19,6 @@ namespace ServerKingOfDices
     {
         public Form1()
         {
-            CheckForIllegalCrossThreadCalls=false;
             InitializeComponent();
         }
 
@@ -37,10 +36,8 @@ namespace ServerKingOfDices
                 Thread Accept = new Thread(() =>
                 {
                     clientAccept(server);
-                    button1.Enabled = true;
                 });
                 Accept.Start();
-
                 button1.Enabled = false;
             }
             catch (Exception errore)
@@ -54,14 +51,13 @@ namespace ServerKingOfDices
             List<IPAddress> allIP = new List<IPAddress>(Dns.GetHostAddresses(Dns.GetHostName()));
             IPAddress ip = IPAddress.Parse("127.0.0.1");
 
-            foreach (var inf in System.Net.NetworkInformation.NetworkInterface.GetAllNetworkInterfaces())
+            foreach (var inf in NetworkInterface.GetAllNetworkInterfaces())
             {
                 if (inf.Name.Equals("Ethernet") || inf.Name.Equals("Wi-Fi"))
                 {
                     foreach (UnicastIPAddressInformation ip_interface in inf.GetIPProperties().UnicastAddresses)
                     {
-                        // Controllare che sia IPv4
-                        if (ip_interface.Address.AddressFamily == System.Net.Sockets.AddressFamily.InterNetwork && allIP.Contains(ip_interface.Address))
+                        if (ip_interface.Address.AddressFamily == AddressFamily.InterNetwork && allIP.Contains(ip_interface.Address))
                             ip = IPAddress.Parse(ip_interface.Address.ToString());
 
                     }
@@ -81,23 +77,19 @@ namespace ServerKingOfDices
             try
             {
                 int RollDice;
-                byte[] buffer;
                 Random rn = new Random(Guid.NewGuid().GetHashCode());
 
                 RollDice = rn.Next(1, 7);
                 addrolls = RollDice;
-                buffer = BitConverter.GetBytes(RollDice);
-                client.Send(buffer);
+                client.Send(BitConverter.GetBytes(RollDice));
                 Thread.Sleep(200);
 
                 RollDice = rn.Next(1, 7);
-                buffer = BitConverter.GetBytes(RollDice);
-                client.Send(buffer);
+                client.Send(BitConverter.GetBytes(RollDice));
                 Thread.Sleep(200);
 
                 addrolls += RollDice;
-                buffer = BitConverter.GetBytes(addrolls);
-                client.Send(buffer);
+                client.Send(BitConverter.GetBytes(addrolls));
                 Thread.Sleep(200);
             }
             catch (Exception errore)
@@ -107,7 +99,7 @@ namespace ServerKingOfDices
             return addrolls;
         }
 
-        private void clientAccept (Socket server)
+        private void clientAccept(Socket server)
         {
             int N_client = 0;
             Dictionary<Socket,int> ValoriClient = new Dictionary<Socket, int>();
@@ -132,20 +124,20 @@ namespace ServerKingOfDices
                                 int somma_dadi = clientThread(ValoriClient.ElementAt(0).Key);
                                 if (somma_dadi == 0)
                                     throw new NullReferenceException("Non sono stati lanciati i dati a seguito di una eccezione");
-                                ValoriClient[ValoriClient.ElementAt(1).Key] = somma_dadi;
+                                ValoriClient[ValoriClient.ElementAt(0).Key] = somma_dadi;
 
                                 somma_dadi = clientThread(ValoriClient.ElementAt(1).Key);
                                 if (somma_dadi == 0)
                                     throw new NullReferenceException("Non sono stati lanciati i dati a seguito di una eccezione");
-                                ValoriClient[ValoriClient.ElementAt(0).Key] = somma_dadi;
+                                ValoriClient[ValoriClient.ElementAt(1).Key] = somma_dadi;
                             }
                         });
                         ThreadMulticlient.Start();
                         ThreadMulticlient.Join();
                     }
-                    catch (Exception exp)
+                    catch (Exception errore)
                     {
-                        MessageBox.Show(exp.Message);
+                        MessageBox.Show(errore.Message);
                     }
                 } else 
                 {
@@ -208,11 +200,10 @@ namespace ServerKingOfDices
                         ValoriClient.ElementAt(0).Key.Close();
                         ValoriClient.ElementAt(1).Key.Shutdown(SocketShutdown.Both);
                         ValoriClient.ElementAt(1).Key.Close();
-                    } catch(Exception exp)
+                    } catch(Exception errore)
                     {
-                        MessageBox.Show(exp.Message);
+                        MessageBox.Show(errore.Message);
                     }                        
-
                     N_client = 0;
                     ValoriClient.Clear();
                 }
@@ -243,6 +234,10 @@ namespace ServerKingOfDices
 
         private int whoWins(Dictionary<Socket, int> mappa)
         {
+            foreach (var x in mappa)
+            {
+                MessageBox.Show(x.Value.ToString());
+            }
             if (mappa.ElementAt(0).Value > mappa.ElementAt(1).Value)
                 return -1;
             if (mappa.ElementAt(0).Value < mappa.ElementAt(1).Value)

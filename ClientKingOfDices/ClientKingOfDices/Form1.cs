@@ -66,7 +66,7 @@ namespace ClientKingOfDices
 
         private void start_connect()
         {
-            IPAddress ip = IPAddress.Parse("10.0.0.156");
+            IPAddress ip = IPAddress.Parse("10.0.0.165");
             IPEndPoint EP = new IPEndPoint(ip, 9999);
             socket = new Socket(ip.AddressFamily, SocketType.Stream, ProtocolType.Tcp);
             try
